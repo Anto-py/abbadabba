@@ -19,7 +19,7 @@ model User {
 model Category {
   id            String        @id @default(cuid())
   name          String
-  code          String        @unique
+  code          String
   deductionRate Float
   proofRequired Boolean       @default(true)
   isDefault     Boolean       @default(false)
@@ -28,6 +28,8 @@ model Category {
   transactions  Transaction[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@unique([userId, code])
 }
 
 model Transaction {

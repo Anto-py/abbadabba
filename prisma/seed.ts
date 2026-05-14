@@ -4,8 +4,6 @@ import { DEFAULT_CATEGORIES } from "../lib/categories-seed";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed requires a userId — seed is run after first user login in production
-  // For dev, create a system seed user
   const seedUser = await prisma.user.upsert({
     where: { email: "seed@abbadaba.local" },
     update: {},
@@ -14,16 +12,12 @@ async function main() {
 
   for (const cat of DEFAULT_CATEGORIES) {
     await prisma.category.upsert({
-      where: { code: cat.code },
+      where: { userId_code: { userId: seedUser.id, code: cat.code } },
       update: { name: cat.name, deductionRate: cat.deductionRate },
-      create: {
-        ...cat,
-        isDefault: true,
-        userId: seedUser.id,
-      },
+      create: { ...cat, isDefault: true, userId: seedUser.id },
     });
   }
-  console.log(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
+  console.log(`Seeded ${DEFAULT_CATEGORIES.length} categories for dev user`);
 }
 
 main()

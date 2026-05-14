@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
+import { seedUserCategories } from "@/lib/seed-user-categories";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,11 +14,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
-      await prisma.user.upsert({
+      const dbUser = await prisma.user.upsert({
         where: { email: user.email },
         update: { name: user.name, image: user.image },
         create: { email: user.email, name: user.name, image: user.image },
       });
+      await seedUserCategories(dbUser.id);
       return true;
     },
     async session({ session }) {
