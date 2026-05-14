@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "node:stream";
 
 function getDriveClient() {
   const auth = new google.auth.JWT({
@@ -45,7 +46,6 @@ export async function uploadToDrive(
   const yearFolderId = await getOrCreateFolder(drive, String(year), rootId);
   const categoryFolderId = await getOrCreateFolder(drive, categoryCode, yearFolderId);
 
-  const { Readable } = await import("stream");
   const file = await drive.files.create({
     requestBody: {
       name: fileName,
