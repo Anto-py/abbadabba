@@ -37,6 +37,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
+      const allowed = (process.env.ALLOWED_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (allowed.length > 0 && !allowed.includes(user.email.toLowerCase())) {
+        return false;
+      }
       const dbUser = await prisma.user.upsert({
         where: { email: user.email },
         update: { name: user.name, image: user.image },
