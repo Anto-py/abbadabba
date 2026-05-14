@@ -7,7 +7,7 @@ import { uploadToDrive } from "@/lib/google-drive";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"];
 
 async function getUserId() {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Fichier > 10 Mo" }, { status: 413 });
+    return NextResponse.json({ error: "Fichier > 25 Mo" }, { status: 413 });
   }
   if (!ALLOWED.includes(file.type)) {
     return NextResponse.json({ error: `Type non supporté : ${file.type}` }, { status: 415 });
