@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 async function getUserId() {
   const session = await getServerSession(authOptions);
   return (session?.user as { id?: string } | undefined)?.id ?? null;
 }
+
+const DEFAULT_PAGE_SIZE = 20;
 
 export async function GET(request: Request) {
   const userId = await getUserId();
@@ -14,15 +17,57 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const year = searchParams.get("year");
-  const where: { userId: string; fiscalYear?: number } = { userId };
-  if (year) where.fiscalYear = Number(year);
+  const type = searchParams.get("type");
+  const categoryId = searchParams.get("categoryId");
+  const month = searchParams.get("month");
+  const pageRaw = Number(searchParams.get("page") ?? "1");
+  const pageSizeRaw = Number(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE));
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
+  const pageSize =
+    Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 && pageSizeRaw <= 100
+      ? Math.floor(pageSizeRaw)
+      : DEFAULT_PAGE_SIZE;
 
-  const txs = await prisma.transaction.findMany({
-    where,
-    orderBy: { date: "desc" },
-    include: { category: { select: { code: true, name: true } } },
-  });
-  return NextResponse.json(txs);
+  const where: Prisma.TransactionWhereInput = { userId };
+
+  if (year) {
+    const y = Number(year);
+    if (!Number.isFinite(y)) {
+      return NextResponse.json({ error: "Année invalide" }, { status: 400 });
+    }
+    where.fiscalYear = y;
+
+    if (month) {
+      const m = Number(month);
+      if (!Number.isFinite(m) || m < 1 || m > 12) {
+        return NextResponse.json({ error: "Mois invalide" }, { status: 400 });
+      }
+      where.date = {
+        gte: new Date(Date.UTC(y, m - 1, 1)),
+        lt: new Date(Date.UTC(y, m, 1)),
+      };
+    }
+  }
+
+  if (type === "EXPENSE" || type === "INCOME") {
+    where.type = type;
+  }
+  if (categoryId) {
+    where.categoryId = categoryId;
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.transaction.findMany({
+      where,
+      orderBy: { date: "desc" },
+      include: { category: { select: { id: true, code: true, name: true } } },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.transaction.count({ where }),
+  ]);
+
+  return NextResponse.json({ items, total, page, pageSize });
 }
 
 export async function POST(request: Request) {

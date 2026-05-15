@@ -75,3 +75,8 @@ export async function uploadToDrive(
     fileName,
   };
 }
+
+export async function deleteFromDrive(accessToken: string, fileId: string): Promise<void> {
+  const drive = getDriveClient(accessToken);
+  await drive.files.delete({ fileId });
+}
