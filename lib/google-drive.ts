@@ -40,18 +40,27 @@ export async function uploadToDrive(
   mimeType: string,
   fileName: string,
   year: number,
-  categoryCode: string
+  type: "EXPENSE" | "INCOME",
+  categoryCode?: string,
 ): Promise<{ driveId: string; webViewLink: string; fileName: string }> {
   const drive = getDriveClient(accessToken);
 
   const rootId = await getOrCreateFolder(drive, ROOT_FOLDER_NAME, "root");
   const yearFolderId = await getOrCreateFolder(drive, String(year), rootId);
-  const categoryFolderId = await getOrCreateFolder(drive, categoryCode, yearFolderId);
+
+  let parentId: string;
+  if (type === "INCOME") {
+    parentId = await getOrCreateFolder(drive, "recettes", yearFolderId);
+  } else {
+    if (!categoryCode) throw new Error("categoryCode requis pour une dépense");
+    const expensesId = await getOrCreateFolder(drive, "depenses", yearFolderId);
+    parentId = await getOrCreateFolder(drive, categoryCode, expensesId);
+  }
 
   const file = await drive.files.create({
     requestBody: {
       name: fileName,
-      parents: [categoryFolderId],
+      parents: [parentId],
     },
     media: {
       mimeType,

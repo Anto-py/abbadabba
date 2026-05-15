@@ -51,12 +51,19 @@ export async function POST(request: NextRequest) {
   const categoryId = form.get("categoryId");
   const dateStr = form.get("date");
   const description = (form.get("description") as string | null) ?? "";
+  const type = form.get("type");
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
   }
-  if (typeof categoryId !== "string" || typeof dateStr !== "string") {
-    return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
+  if (type !== "EXPENSE" && type !== "INCOME") {
+    return NextResponse.json({ error: "Type invalide" }, { status: 400 });
+  }
+  if (typeof dateStr !== "string") {
+    return NextResponse.json({ error: "Date manquante" }, { status: 400 });
+  }
+  if (type === "EXPENSE" && typeof categoryId !== "string") {
+    return NextResponse.json({ error: "Catégorie manquante" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "Fichier > 25 Mo" }, { status: 413 });
@@ -70,16 +77,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Date invalide" }, { status: 400 });
   }
 
-  const category = await prisma.category.findUnique({ where: { id: categoryId } });
-  if (!category || category.userId !== userId) {
-    return NextResponse.json({ error: "Catégorie introuvable" }, { status: 404 });
+  let categoryCode: string | undefined;
+  if (type === "EXPENSE") {
+    const category = await prisma.category.findUnique({ where: { id: categoryId as string } });
+    if (!category || category.userId !== userId) {
+      return NextResponse.json({ error: "Catégorie introuvable" }, { status: 404 });
+    }
+    categoryCode = category.code;
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const iso = date.toISOString().slice(0, 10);
   const slug = slugify(description) || "preuve";
   const ext = extFromMime(file.type);
-  const fileName = `${iso}_${category.code}_${slug}.${ext}`;
+  const fileName = `${iso}_${slug}.${ext}`;
 
   try {
     const result = await uploadToDrive(
@@ -88,7 +99,8 @@ export async function POST(request: NextRequest) {
       file.type,
       fileName,
       date.getFullYear(),
-      category.code,
+      type,
+      categoryCode,
     );
     return NextResponse.json(result, { status: 201 });
   } catch (e) {

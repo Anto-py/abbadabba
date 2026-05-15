@@ -59,6 +59,7 @@ export function TransactionForm() {
     if (!date) return setError("Date requise");
     if (!amountNum || amountNum <= 0) return setError("Montant invalide");
     if (!categoryId) return setError("Catégorie requise");
+    if (!description.trim()) return setError("Nom requis");
     if (proofRequired && !proof) return setError("Preuve requise");
 
     setSubmitting(true);
@@ -73,6 +74,7 @@ export function TransactionForm() {
         setProgress("Upload de la preuve…");
         const fd = new FormData();
         fd.append("file", proof);
+        fd.append("type", type);
         fd.append("categoryId", categoryId);
         fd.append("date", date);
         fd.append("description", description);
@@ -186,11 +188,12 @@ export function TransactionForm() {
       </label>
 
       <label className="block">
-        <span className="text-xs text-zinc-500">Description</span>
+        <span className="text-xs text-zinc-500">Nom</span>
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Ex. Claude Pro mai"
+          placeholder={type === "INCOME" ? "Ex. Cours particuliers Pierre" : "Ex. Claude Pro mai"}
+          required
           className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
         />
       </label>
