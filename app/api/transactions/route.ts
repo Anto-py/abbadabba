@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { syncYearSheet } from "@/lib/google-sheets";
 import type { Prisma } from "@prisma/client";
+
+export const runtime = "nodejs";
 
 async function getUserId() {
   const session = await getServerSession(authOptions);
@@ -70,7 +74,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ items, total, page, pageSize });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -130,5 +134,12 @@ export async function POST(request: Request) {
       userId,
     },
   });
+
+  const jwt = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const accessToken = jwt?.accessToken as string | undefined;
+  if (accessToken) {
+    syncYearSheet({ userId, year: created.fiscalYear, accessToken });
+  }
+
   return NextResponse.json(created, { status: 201 });
 }

@@ -15,6 +15,20 @@ model User {
   createdAt       DateTime      @default(now())
   transactions    Transaction[]
   categories      Category[]
+  yearSheets      YearSheet[]
+}
+
+model YearSheet {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  year          Int
+  driveFileId   String
+  spreadsheetId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, year])
 }
 
 model Category {

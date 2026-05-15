@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { seedUserCategories } from "@/lib/seed-user-categories";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 async function refreshGoogleAccessToken(refreshToken: string) {
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -29,7 +30,7 @@ export const authOptions: NextAuthOptions = {
         params: {
           prompt: "consent",
           access_type: "offline",
-          scope: `openid email profile ${DRIVE_SCOPE}`,
+          scope: `openid email profile ${DRIVE_SCOPE} ${SHEETS_SCOPE}`,
         },
       },
     }),

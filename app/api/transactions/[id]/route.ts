@@ -4,6 +4,7 @@ import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteFromDrive } from "@/lib/google-drive";
+import { syncYearSheet } from "@/lib/google-sheets";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,7 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = await getUserId();
@@ -103,6 +104,16 @@ export async function PATCH(
     },
     include: { category: { select: { id: true, code: true, name: true } } },
   });
+
+  const jwt = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const accessToken = jwt?.accessToken as string | undefined;
+  if (accessToken) {
+    const years = new Set<number>([updated.fiscalYear, existing.fiscalYear]);
+    for (const year of years) {
+      syncYearSheet({ userId, year, accessToken });
+    }
+  }
+
   return NextResponse.json(updated);
 }
 
@@ -119,18 +130,22 @@ export async function DELETE(
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 
-  if (tx.proofDriveId) {
-    const jwt = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-    const accessToken = jwt?.accessToken as string | undefined;
-    if (accessToken) {
-      try {
-        await deleteFromDrive(accessToken, tx.proofDriveId);
-      } catch (e) {
-        console.error("Drive delete failed (continue with DB delete)", e);
-      }
+  const jwt = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const accessToken = jwt?.accessToken as string | undefined;
+
+  if (tx.proofDriveId && accessToken) {
+    try {
+      await deleteFromDrive(accessToken, tx.proofDriveId);
+    } catch (e) {
+      console.error("Drive delete failed (continue with DB delete)", e);
     }
   }
 
   await prisma.transaction.delete({ where: { id } });
+
+  if (accessToken) {
+    syncYearSheet({ userId, year: tx.fiscalYear, accessToken });
+  }
+
   return NextResponse.json({ ok: true });
 }
