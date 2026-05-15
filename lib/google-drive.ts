@@ -80,3 +80,23 @@ export async function deleteFromDrive(accessToken: string, fileId: string): Prom
   const drive = getDriveClient(accessToken);
   await drive.files.delete({ fileId });
 }
+
+export async function uploadToYearFolder(
+  accessToken: string,
+  fileBuffer: Buffer,
+  mimeType: string,
+  fileName: string,
+  year: number,
+): Promise<{ driveId: string; webViewLink: string }> {
+  const drive = getDriveClient(accessToken);
+  const rootId = await getOrCreateFolder(drive, ROOT_FOLDER_NAME, "root");
+  const yearFolderId = await getOrCreateFolder(drive, String(year), rootId);
+
+  const file = await drive.files.create({
+    requestBody: { name: fileName, parents: [yearFolderId] },
+    media: { mimeType, body: Readable.from(fileBuffer) },
+    fields: "id,webViewLink",
+  });
+
+  return { driveId: file.data.id!, webViewLink: file.data.webViewLink! };
+}

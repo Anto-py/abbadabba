@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TripRateManager } from "@/components/Trip/TripRateManager";
 import { HomeAddressManager } from "@/components/Trip/HomeAddressManager";
+import { YearResetManager } from "@/components/Settings/YearResetManager";
 
 export default function SettingsPage() {
   return (
@@ -25,6 +26,15 @@ export default function SettingsPage() {
         </h2>
         <div className="mt-3">
           <TripRateManager />
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          Fin d'année fiscale
+        </h2>
+        <div className="mt-3">
+          <YearResetManager />
         </div>
       </section>
 
