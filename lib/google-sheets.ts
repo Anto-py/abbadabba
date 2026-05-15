@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 const ROOT_FOLDER_NAME = "Abbadaba";
 const TAB_TX = "TRANSACTIONS";
 const TAB_SUMMARY = "RÉSUMÉ";
+const TAB_TRIPS = "TRAJETS";
 
 function getClients(accessToken: string) {
   const auth = new google.auth.OAuth2();
@@ -62,10 +63,28 @@ async function createSpreadsheetInFolder(
           },
         },
         { addSheet: { properties: { title: TAB_SUMMARY } } },
+        { addSheet: { properties: { title: TAB_TRIPS } } },
       ],
     },
   });
   return spreadsheetId;
+}
+
+async function ensureTabExists(
+  sheets: Sheets,
+  spreadsheetId: string,
+  title: string,
+): Promise<void> {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets.properties.title",
+  });
+  const exists = meta.data.sheets?.some((s) => s.properties?.title === title);
+  if (exists) return;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: { requests: [{ addSheet: { properties: { title } } }] },
+  });
 }
 
 async function ensureSpreadsheet(
@@ -117,11 +136,16 @@ export async function rebuildYearSheet(args: {
   const { userId, year, accessToken } = args;
   const { drive, sheets } = getClients(accessToken);
   const spreadsheetId = await ensureSpreadsheet(drive, sheets, userId, year);
+  await ensureTabExists(sheets, spreadsheetId, TAB_TRIPS);
 
-  const [txs, user] = await Promise.all([
+  const [txs, trips, user] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId, fiscalYear: year },
       include: { category: { select: { code: true, name: true } } },
+      orderBy: { date: "asc" },
+    }),
+    prisma.trip.findMany({
+      where: { userId, fiscalYear: year },
       orderBy: { date: "asc" },
     }),
     prisma.user.findUnique({ where: { id: userId }, select: { marginalTaxRate: true } }),
@@ -198,9 +222,30 @@ export async function rebuildYearSheet(args: {
       .map((c) => [c.code, c.name, round(c.expense), round(c.deductible)]),
   ];
 
+  const tripHeader = [
+    "Date",
+    "Départ",
+    "Destination",
+    "Km",
+    "A/R",
+    "Motif",
+    "Taux €/km",
+    "Indemnité (€)",
+  ];
+  const tripRows: (string | number)[][] = trips.map((t) => [
+    t.date.toISOString().slice(0, 10),
+    t.departure,
+    t.destination,
+    t.km,
+    t.roundTrip ? "Oui" : "Non",
+    t.purpose,
+    t.ratePerKm,
+    round(t.indemnity),
+  ]);
+
   await sheets.spreadsheets.values.batchClear({
     spreadsheetId,
-    requestBody: { ranges: [TAB_TX, TAB_SUMMARY] },
+    requestBody: { ranges: [TAB_TX, TAB_SUMMARY, TAB_TRIPS] },
   });
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
@@ -209,6 +254,7 @@ export async function rebuildYearSheet(args: {
       data: [
         { range: `${TAB_TX}!A1`, values: [txHeader, ...txRows] },
         { range: `${TAB_SUMMARY}!A1`, values: summaryRows },
+        { range: `${TAB_TRIPS}!A1`, values: [tripHeader, ...tripRows] },
       ],
     },
   });

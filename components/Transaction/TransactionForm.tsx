@@ -20,10 +20,10 @@ function todayISO() {
   return new Date(d.getTime() - tz).toISOString().slice(0, 10);
 }
 
-export function TransactionForm() {
+export function TransactionForm({ initialType = "EXPENSE" }: { initialType?: TxType } = {}) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [type, setType] = useState<TxType>("EXPENSE");
+  const type: TxType = initialType;
   const [date, setDate] = useState(todayISO());
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -119,31 +119,6 @@ export function TransactionForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setType("EXPENSE")}
-          className={`rounded-xl py-3 text-sm font-medium ${
-            type === "EXPENSE"
-              ? "bg-red-600 text-white"
-              : "bg-white text-zinc-600 shadow-sm"
-          }`}
-        >
-          − Dépense
-        </button>
-        <button
-          type="button"
-          onClick={() => setType("INCOME")}
-          className={`rounded-xl py-3 text-sm font-medium ${
-            type === "INCOME"
-              ? "bg-emerald-600 text-white"
-              : "bg-white text-zinc-600 shadow-sm"
-          }`}
-        >
-          + Recette
-        </button>
-      </div>
-
       <label className="block">
         <span className="text-xs text-zinc-500">Date</span>
         <input

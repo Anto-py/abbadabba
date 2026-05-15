@@ -3,5 +3,11 @@ import middleware from "next-auth/middleware";
 export default middleware;
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/transactions/:path*", "/categories/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/transactions/:path*",
+    "/categories/:path*",
+    "/trips/:path*",
+    "/settings/:path*",
+  ],
 };

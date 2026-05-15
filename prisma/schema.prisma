@@ -12,10 +12,13 @@ model User {
   name            String?
   image           String?
   marginalTaxRate Float         @default(45)
+  homeAddress     String?
   createdAt       DateTime      @default(now())
   transactions    Transaction[]
   categories      Category[]
   yearSheets      YearSheet[]
+  tripRates       TripRate[]
+  trips           Trip[]
 }
 
 model YearSheet {
@@ -63,8 +66,44 @@ model Transaction {
   fiscalYear       Int
   userId           String
   user             User            @relation(fields: [userId], references: [id])
+  trip             Trip?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+}
+
+model TripRate {
+  id        String   @id @default(cuid())
+  ratePerKm Float
+  validFrom DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  trips     Trip[]
+  createdAt DateTime @default(now())
+
+  @@index([userId, validFrom])
+}
+
+model Trip {
+  id            String       @id @default(cuid())
+  date          DateTime
+  departure     String       @default("Domicile")
+  destination   String
+  km            Float
+  roundTrip     Boolean      @default(false)
+  purpose       String
+  ratePerKm     Float
+  indemnity     Float
+  transactionId String?      @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  tripRateId    String
+  tripRate      TripRate     @relation(fields: [tripRateId], references: [id])
+  fiscalYear    Int
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId, fiscalYear])
 }
 
 enum TransactionType {
