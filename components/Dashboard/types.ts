@@ -1,14 +1,13 @@
 export type DashboardData = {
   year: number;
   availableYears: number[];
+  marginalTaxRate: number;
   totals: {
     income: number;
     expense: number;
     deductible: number;
-    balance: number;
-    ippSavings: number;
-    forfait: number;
-    advantageVsForfait: number;
+    taxBeforeDeduction: number;
+    taxAfterDeduction: number;
   };
   byCategory: {
     code: string;

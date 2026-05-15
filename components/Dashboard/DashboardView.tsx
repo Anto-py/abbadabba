@@ -6,6 +6,7 @@ import { YearSelector } from "./YearSelector";
 import { SummaryCards } from "./SummaryCards";
 import { CategoryChart } from "./CategoryChart";
 import { MonthlyChart } from "./MonthlyChart";
+import { MarginalRateEditor } from "./MarginalRateEditor";
 
 type Props = { initialYear: number };
 
@@ -35,19 +36,26 @@ export function DashboardView({ initialYear }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <YearSelector
           year={year}
           availableYears={data?.availableYears ?? []}
           onChange={setYear}
         />
         {data && (
-          <span className="text-xs text-zinc-500">
-            {data.transactionCount} transaction
-            {data.transactionCount > 1 ? "s" : ""}
-          </span>
+          <MarginalRateEditor
+            rate={data.marginalTaxRate}
+            onSaved={() => load(year)}
+          />
         )}
       </div>
+
+      {data && (
+        <p className="text-right text-xs text-zinc-500">
+          {data.transactionCount} transaction
+          {data.transactionCount > 1 ? "s" : ""}
+        </p>
+      )}
 
       {error && (
         <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">

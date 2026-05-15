@@ -3,10 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const IPP_MARGINAL_RATE = 0.45;
-const FORFAIT_RATE = 0.30;
-const FORFAIT_CAP = 6070;
-
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -18,6 +14,12 @@ export async function GET(request: Request) {
   if (!Number.isInteger(year) || year < 2000 || year > 2100) {
     return NextResponse.json({ error: "Année invalide" }, { status: 400 });
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { marginalTaxRate: true },
+  });
+  const rate = user?.marginalTaxRate ?? 45;
 
   const txs = await prisma.transaction.findMany({
     where: { userId, fiscalYear: year },
@@ -79,21 +81,20 @@ export async function GET(request: Request) {
     }))
     .sort((a, b) => b.deductible - a.deductible);
 
-  const forfait = Math.min(totalIncome * FORFAIT_RATE, FORFAIT_CAP);
-  const advantageVsForfait = totalDeductible - forfait;
-  const ippSavings = totalDeductible * IPP_MARGINAL_RATE;
+  const taxBeforeDeduction = (totalIncome * rate) / 100;
+  const taxableBase = Math.max(0, totalIncome - totalDeductible);
+  const taxAfterDeduction = (taxableBase * rate) / 100;
 
   return NextResponse.json({
     year,
     availableYears: years.map((y) => y.fiscalYear),
+    marginalTaxRate: rate,
     totals: {
       income: round(totalIncome),
       expense: round(totalExpense),
       deductible: round(totalDeductible),
-      balance: round(totalIncome - totalExpense),
-      ippSavings: round(ippSavings),
-      forfait: round(forfait),
-      advantageVsForfait: round(advantageVsForfait),
+      taxBeforeDeduction: round(taxBeforeDeduction),
+      taxAfterDeduction: round(taxAfterDeduction),
     },
     byCategory: categories,
     byMonth: byMonth.map((m) => ({
