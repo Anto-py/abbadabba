@@ -16,7 +16,7 @@ export async function GET() {
 
   const rates = await prisma.tripRate.findMany({
     where: { userId },
-    orderBy: { validFrom: "desc" },
+    orderBy: [{ validFrom: "desc" }, { createdAt: "desc" }],
   });
   return NextResponse.json({ items: rates });
 }

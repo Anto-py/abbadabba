@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export async function getActiveTripRate(userId: string, at: Date = new Date()) {
   return prisma.tripRate.findFirst({
     where: { userId, validFrom: { lte: at } },
-    orderBy: { validFrom: "desc" },
+    orderBy: [{ validFrom: "desc" }, { createdAt: "desc" }],
   });
 }
 

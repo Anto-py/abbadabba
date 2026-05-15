@@ -75,7 +75,7 @@ export function TripRateManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ratePerKm: num,
-          validFrom: new Date(validFrom + "T00:00:00").toISOString(),
+          validFrom: `${validFrom}T00:00:00.000Z`,
         }),
       });
       if (!r.ok) {

@@ -23,7 +23,7 @@ export async function seedUserCategories(userId: string) {
     await prisma.tripRate.create({
       data: {
         ratePerKm: INITIAL_TRIP_RATE,
-        validFrom: new Date(),
+        validFrom: new Date("2024-01-01T00:00:00.000Z"),
         userId,
       },
     });
