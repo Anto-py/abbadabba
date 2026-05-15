@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withPWA = require("next-pwa");
 
@@ -9,8 +10,14 @@ const pwaConfig = withPWA({
   skipWaiting: true,
 });
 
+const projectRoot = path.resolve(__dirname);
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingRoot: projectRoot,
+  turbopack: {
+    root: projectRoot,
+  },
 };
 
 export default pwaConfig(nextConfig);
