@@ -58,7 +58,7 @@ export function TransactionForm() {
 
     if (!date) return setError("Date requise");
     if (!amountNum || amountNum <= 0) return setError("Montant invalide");
-    if (!categoryId) return setError("Catégorie requise");
+    if (type === "EXPENSE" && !categoryId) return setError("Catégorie requise");
     if (!description.trim()) return setError("Nom requis");
     if (proofRequired && !proof) return setError("Preuve requise");
 
@@ -75,7 +75,7 @@ export function TransactionForm() {
         const fd = new FormData();
         fd.append("file", proof);
         fd.append("type", type);
-        fd.append("categoryId", categoryId);
+        if (type === "EXPENSE") fd.append("categoryId", categoryId);
         fd.append("date", date);
         fd.append("description", description);
         const up = await fetch("/api/upload", { method: "POST", body: fd });
@@ -99,7 +99,7 @@ export function TransactionForm() {
           type,
           date,
           amount: amountNum,
-          categoryId,
+          categoryId: type === "EXPENSE" ? categoryId : null,
           description,
           ...proofPayload,
         }),
@@ -170,22 +170,24 @@ export function TransactionForm() {
         />
       </label>
 
-      <label className="block">
-        <span className="text-xs text-zinc-500">Catégorie</span>
-        <select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          required
-          className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
-        >
-          <option value="">— Choisir —</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} {type === "EXPENSE" ? `(${c.deductionRate}%)` : ""}
-            </option>
-          ))}
-        </select>
-      </label>
+      {type === "EXPENSE" && (
+        <label className="block">
+          <span className="text-xs text-zinc-500">Catégorie</span>
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+            className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
+          >
+            <option value="">— Choisir —</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.deductionRate}%)
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label className="block">
         <span className="text-xs text-zinc-500">Nom</span>
