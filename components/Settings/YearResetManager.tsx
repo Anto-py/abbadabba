@@ -189,7 +189,7 @@ export function YearResetManager() {
 
       <p className="text-xs text-zinc-500">
         Supprime <strong>toutes les transactions et tous les trajets</strong> de la base
-        Coolify, toutes années confondues. Utilisateur, catégories, taux km et fichiers
+        de données, toutes années confondues. Utilisateur, catégories, taux km et fichiers
         Drive (Sheets + preuves) sont préservés.
       </p>
 

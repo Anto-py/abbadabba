@@ -5,7 +5,9 @@ import { prisma } from "@/lib/prisma";
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const OSRM = "https://router.project-osrm.org/route/v1/driving";
-const UA = "AbbadabaApp/1.0 (https://abbadaba.antoninbareau.eu)";
+const UA =
+  process.env.APP_USER_AGENT ||
+  `AbbadabaApp/1.0 (${process.env.NEXTAUTH_URL || "https://abbadaba.example.com"})`;
 
 type Geocoded = { lat: number; lon: number; label: string };
 
