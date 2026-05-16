@@ -44,6 +44,7 @@ export async function GET(request: Request) {
     month: i + 1,
     income: 0,
     expense: 0,
+    deductible: 0,
   }));
 
   for (const t of txs) {
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
       totalExpense += t.amount;
       byMonth[m].expense += t.amount;
       const ded = t.deductibleAmount ?? 0;
+      byMonth[m].deductible += ded;
       totalDeductible += ded;
       if (t.category) {
         const key = t.category.id;
@@ -101,6 +103,7 @@ export async function GET(request: Request) {
       month: m.month,
       income: round(m.income),
       expense: round(m.expense),
+      deductible: round(m.deductible),
     })),
     transactionCount: txs.length,
   });

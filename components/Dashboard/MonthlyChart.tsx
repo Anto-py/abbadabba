@@ -13,20 +13,28 @@ const PAD_T = 8;
 const PAD_B = 20;
 
 export function MonthlyChart({ byMonth }: Props) {
-  const max = byMonth.reduce(
-    (m, p) => Math.max(m, p.income, p.expense),
-    0,
-  );
+  const cumIncome: number[] = [];
+  const cumDeductible: number[] = [];
+  let sumI = 0;
+  let sumD = 0;
+  for (const m of byMonth) {
+    sumI += m.income;
+    sumD += m.deductible;
+    cumIncome.push(sumI);
+    cumDeductible.push(sumD);
+  }
+
+  const max = Math.max(...cumIncome, ...cumDeductible, 0);
   const niceMax = max > 0 ? max : 1;
   const innerW = W - PAD_L - PAD_R;
   const innerH = H - PAD_T - PAD_B;
   const stepX = innerW / 11;
 
-  const toPoints = (key: "income" | "expense") =>
-    byMonth
-      .map((p, i) => {
+  const toPoints = (series: number[]) =>
+    series
+      .map((v, i) => {
         const x = PAD_L + i * stepX;
-        const y = PAD_T + innerH - (p[key] / niceMax) * innerH;
+        const y = PAD_T + innerH - (v / niceMax) * innerH;
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(" ");
@@ -37,11 +45,11 @@ export function MonthlyChart({ byMonth }: Props) {
     <section className="rounded-2xl bg-white p-4 shadow-sm">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-semibold text-[#1a1a2e]">
-          Évolution mensuelle
+          Évolution cumulée
         </h2>
         <div className="flex items-center gap-3 text-xs">
           <Legend color="bg-emerald-600" label="Recettes" />
-          <Legend color="bg-red-500" label="Dépenses" />
+          <Legend color="bg-red-500" label="Déductible" />
         </div>
       </div>
       <div className="mt-3 text-xs text-zinc-400">Max&nbsp;: {formatEUR(niceMax)}</div>
@@ -49,7 +57,7 @@ export function MonthlyChart({ byMonth }: Props) {
         viewBox={`0 0 ${W} ${H}`}
         className="mt-1 block w-full"
         role="img"
-        aria-label="Recettes et dépenses par mois"
+        aria-label="Recettes et déductible cumulés par mois"
       >
         <line
           x1={PAD_L}
@@ -67,7 +75,7 @@ export function MonthlyChart({ byMonth }: Props) {
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              points={toPoints("income")}
+              points={toPoints(cumIncome)}
             />
             <polyline
               fill="none"
@@ -75,7 +83,7 @@ export function MonthlyChart({ byMonth }: Props) {
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              points={toPoints("expense")}
+              points={toPoints(cumDeductible)}
             />
           </>
         )}

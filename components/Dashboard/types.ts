@@ -15,7 +15,7 @@ export type DashboardData = {
     expense: number;
     deductible: number;
   }[];
-  byMonth: { month: number; income: number; expense: number }[];
+  byMonth: { month: number; income: number; expense: number; deductible: number }[];
   transactionCount: number;
 };
 
