@@ -39,7 +39,7 @@ Vue annuelle (sélecteur d'année fiscale) avec :
 - **4 cartes synthétiques** : Recettes, Dépenses, Déductible, Imposable (recettes − déductible).
 - **Carte « Impôts après déductions »** : Imposable × ton **taux marginal IPP** (éditable d'un clic depuis l'en-tête du dashboard — par défaut 50%, ajustable selon ta tranche).
 - **Compteur de transactions** sur l'année.
-- **Courbe mensuelle** recettes vs dépenses.
+- **Courbe mensuelle** recettes + déductible cumulés sur l'année.
 - **Top catégories** : barres horizontales avec montants par catégorie.
 
 ### Liste des transactions
