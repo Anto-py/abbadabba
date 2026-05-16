@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build --webpack",
+    "build": "prisma generate && next build --webpack",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build --webpack",
     "start": "next start",
     "postinstall": "prisma generate",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
