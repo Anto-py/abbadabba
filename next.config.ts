@@ -3,9 +3,11 @@ import path from "node:path";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withPWA = require("next-pwa");
 
+const isVercel = !!process.env.VERCEL;
+
 const pwaConfig = withPWA({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development" || isVercel,
   register: true,
   skipWaiting: true,
 });
@@ -13,7 +15,7 @@ const pwaConfig = withPWA({
 const projectRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  ...(isVercel ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: projectRoot,
   turbopack: {
     root: projectRoot,
