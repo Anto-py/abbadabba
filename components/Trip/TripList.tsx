@@ -30,6 +30,27 @@ function fmtMoney(n: number) {
   return n.toLocaleString("fr-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+type EditDraft = {
+  date: string;
+  departure: string;
+  destination: string;
+  km: string;
+  roundTrip: boolean;
+  purpose: string;
+};
+
+function toDraft(t: Trip): EditDraft {
+  const single = t.roundTrip ? t.km / 2 : t.km;
+  return {
+    date: t.date.slice(0, 10),
+    departure: t.departure,
+    destination: t.destination,
+    km: String(Math.round(single * 100) / 100),
+    roundTrip: t.roundTrip,
+    purpose: t.purpose,
+  };
+}
+
 export function TripList() {
   const toast = useToast();
   const currentYear = new Date().getFullYear();
@@ -39,6 +60,9 @@ export function TripList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<EditDraft | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   async function load(y: number) {
     setLoading(true);
@@ -71,6 +95,50 @@ export function TripList() {
     const indemnity = trips.reduce((s, t) => s + t.indemnity, 0);
     return { km, indemnity };
   }, [trips]);
+
+  function startEdit(t: Trip) {
+    setEditingId(t.id);
+    setDraft(toDraft(t));
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setDraft(null);
+  }
+
+  async function saveEdit(id: string) {
+    if (!draft) return;
+    const kmNum = Number(draft.km.replace(",", "."));
+    if (!draft.date) return toast.error("Date requise");
+    if (!draft.destination.trim()) return toast.error("Destination requise");
+    if (!draft.purpose.trim()) return toast.error("Motif requis");
+    if (!Number.isFinite(kmNum) || kmNum <= 0) return toast.error("Km invalide");
+
+    setSavingId(id);
+    try {
+      const r = await fetch(`/api/trips/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: draft.date,
+          departure: draft.departure.trim() || "Domicile",
+          destination: draft.destination.trim(),
+          km: kmNum,
+          roundTrip: draft.roundTrip,
+          purpose: draft.purpose.trim(),
+        }),
+      });
+      if (!r.ok) throw new Error();
+      const updated: Trip = await r.json();
+      setTrips((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      cancelEdit();
+      toast.success("Trajet modifié");
+    } catch {
+      toast.error("Modification échouée");
+    } finally {
+      setSavingId(null);
+    }
+  }
 
   async function remove(id: string) {
     if (!confirm("Supprimer ce trajet (et la transaction liée) ?")) return;
@@ -140,37 +208,132 @@ export function TripList() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {trips.map((t) => (
-            <li key={t.id} className="rounded-2xl bg-white p-3 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-zinc-500">{fmtDate(t.date)}</p>
-                  <p className="truncate text-sm font-medium text-[#1a1a2e]">
-                    {t.departure} → {t.destination}
-                  </p>
-                  <p className="truncate text-xs text-zinc-500">{t.purpose}</p>
+          {trips.map((t) => {
+            const isEditing = editingId === t.id && draft;
+            return (
+              <li key={t.id} className="rounded-2xl bg-white p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-zinc-500">{fmtDate(t.date)}</p>
+                    <p className="truncate text-sm font-medium text-[#1a1a2e]">
+                      {t.departure} → {t.destination}
+                    </p>
+                    <p className="truncate text-xs text-zinc-500">{t.purpose}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-emerald-700">
+                      {fmtMoney(t.indemnity)} €
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      {t.km} km{t.roundTrip ? " (A/R)" : ""}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-700">
-                    {fmtMoney(t.indemnity)} €
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    {t.km} km{t.roundTrip ? " (A/R)" : ""}
-                  </p>
+
+                {isEditing && draft && (
+                  <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3">
+                    <label className="block">
+                      <span className="text-xs text-zinc-500">Date</span>
+                      <input
+                        type="date"
+                        value={draft.date}
+                        onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-zinc-500">Départ</span>
+                      <input
+                        value={draft.departure}
+                        onChange={(e) => setDraft({ ...draft, departure: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-zinc-500">Destination</span>
+                      <input
+                        value={draft.destination}
+                        onChange={(e) => setDraft({ ...draft, destination: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <div className="grid grid-cols-[1fr_auto] gap-3">
+                      <label className="block">
+                        <span className="text-xs text-zinc-500">Km (aller simple)</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          value={draft.km}
+                          onChange={(e) => setDraft({ ...draft, km: e.target.value })}
+                          className="mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label className="flex items-end gap-2 pb-2">
+                        <input
+                          type="checkbox"
+                          checked={draft.roundTrip}
+                          onChange={(e) => setDraft({ ...draft, roundTrip: e.target.checked })}
+                          className="h-5 w-5"
+                        />
+                        <span className="text-sm text-zinc-700">A/R</span>
+                      </label>
+                    </div>
+                    <label className="block">
+                      <span className="text-xs text-zinc-500">Motif</span>
+                      <input
+                        value={draft.purpose}
+                        onChange={(e) => setDraft({ ...draft, purpose: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                <div className="mt-2 flex justify-end gap-3">
+                  {isEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        disabled={savingId === t.id}
+                        className="text-xs text-zinc-500 disabled:opacity-50"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(t.id)}
+                        disabled={savingId === t.id}
+                        className="text-xs font-medium text-emerald-700 disabled:opacity-50"
+                      >
+                        {savingId === t.id ? "Enregistrement…" : "Enregistrer"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(t)}
+                        className="text-xs text-[#1a1a2e]"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingId === t.id}
+                        onClick={() => remove(t.id)}
+                        className="text-xs text-red-600 disabled:opacity-50"
+                      >
+                        {deletingId === t.id ? "Suppression…" : "Supprimer"}
+                      </button>
+                    </>
+                  )}
                 </div>
-              </div>
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  disabled={deletingId === t.id}
-                  onClick={() => remove(t.id)}
-                  className="text-xs text-red-600 disabled:opacity-50"
-                >
-                  {deletingId === t.id ? "Suppression…" : "Supprimer"}
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
