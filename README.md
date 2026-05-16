@@ -36,9 +36,11 @@ Tu peux à tout moment :
 ### Dashboard visuel
 
 Vue annuelle (sélecteur d'année fiscale) avec :
-- **6 cartes principales** : recettes, dépenses, déductible, bilan, économie IPP estimée (×45%), comparaison frais réels vs forfait belge (6 070 €).
-- **Top 10 catégories** : barres horizontales.
+- **4 cartes synthétiques** : Recettes, Dépenses, Déductible, Imposable (recettes − déductible).
+- **Carte « Impôts après déductions »** : Imposable × ton **taux marginal IPP** (éditable d'un clic depuis l'en-tête du dashboard — par défaut 50%, ajustable selon ta tranche).
+- **Compteur de transactions** sur l'année.
 - **Courbe mensuelle** recettes vs dépenses.
+- **Top catégories** : barres horizontales avec montants par catégorie.
 
 ### Liste des transactions
 
@@ -239,7 +241,7 @@ Oui. L'app utilise **TON** Google Drive perso pour stocker les preuves (scope `d
 Tu exportes le JSON via **Réglages → Fin d'année fiscale → Sauvegarder**. Tes preuves sont déjà dans ton Drive. Tu peux pointer une nouvelle DB en changeant `DATABASE_URL` et réimporter le JSON.
 
 **Est-ce que ça fait la déclaration IPP à ma place ?**
-Non. L'app te donne les **totaux annuels** par catégorie déductibles vs frais forfaitaires (6 070 € pour 2026), de quoi remplir tes cases TAX-on-web ou ton comptable. C'est un outil de tenue, pas un logiciel de déclaration.
+Non. L'app te donne tes **totaux annuels** (recettes, dépenses, déductible, imposable) et une estimation des impôts après déductions selon ton taux marginal — de quoi remplir tes cases TAX-on-web ou aller voir ton comptable. C'est un outil de tenue, pas un logiciel de déclaration.
 
 **Suis-je obligé d'utiliser Google Drive ?**
 Pour cette version, oui. Le couplage Drive + Sheets est central. Si tu préfères self-host complet, l'app fonctionne aussi avec un service-account Google Workspace mais il faut adapter le code.
