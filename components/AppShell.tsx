@@ -9,8 +9,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hideNav = pathname.startsWith("/auth");
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#f0f2f5]">
-      <main className={`flex-1 ${hideNav ? "" : "pb-24"}`}>{children}</main>
+    <div className="flex h-dvh flex-col bg-[#f0f2f5]">
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {children}
+      </main>
       {!hideNav && <BottomNav />}
     </div>
   );
