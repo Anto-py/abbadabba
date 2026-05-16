@@ -16,8 +16,8 @@ export function SummaryCards({ totals }: Props) {
           accent="text-[#1a1a2e]"
         />
         <Card
-          label="Impôt avant déduction"
-          value={formatEUR(totals.taxBeforeDeduction)}
+          label="Imposable"
+          value={formatEUR(totals.income - totals.deductible)}
           accent="text-zinc-700"
         />
       </div>
