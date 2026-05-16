@@ -12,7 +12,7 @@ const DAMPING = 0.5;
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const hideNav = pathname.startsWith("/auth");
+  const hideNav = pathname.startsWith("/auth") || pathname.startsWith("/setup");
 
   const mainRef = useRef<HTMLElement>(null);
   const startY = useRef<number | null>(null);
