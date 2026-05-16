@@ -93,7 +93,13 @@ export function TripRateManager() {
     }
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Chargement…</p>;
+  if (loading)
+    return (
+      <div className="space-y-3" aria-busy="true">
+        <div className="h-24 animate-pulse rounded-2xl bg-white shadow-sm" />
+        <div className="h-32 animate-pulse rounded-2xl bg-white shadow-sm" />
+      </div>
+    );
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { compressImageIfNeeded } from "@/lib/image-compress";
+import { useToast } from "@/components/Toast/ToastProvider";
 
 type Props = {
   value: File | null;
@@ -9,9 +11,11 @@ type Props = {
 };
 
 export function ProofCapture({ value, onChange, required }: Props) {
+  const toast = useToast();
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!value) {
@@ -27,9 +31,28 @@ export function ProofCapture({ value, onChange, required }: Props) {
     return () => URL.revokeObjectURL(url);
   }, [value]);
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
-    onChange(f);
+    e.target.value = "";
+    if (!f) {
+      onChange(null);
+      return;
+    }
+    setProcessing(true);
+    try {
+      const out = await compressImageIfNeeded(f);
+      if (out !== f) {
+        toast.info(
+          `Image compressée : ${(f.size / 1024 / 1024).toFixed(1)} → ${(out.size / 1024 / 1024).toFixed(1)} Mo`,
+        );
+      }
+      onChange(out);
+    } catch {
+      toast.error("Compression échouée, fichier original conservé");
+      onChange(f);
+    } finally {
+      setProcessing(false);
+    }
   }
 
   return (
@@ -50,7 +73,11 @@ export function ProofCapture({ value, onChange, required }: Props) {
         onChange={handleFile}
       />
 
-      {value ? (
+      {processing ? (
+        <div className="rounded-xl bg-white p-6 text-center text-sm text-zinc-500 shadow-sm" aria-busy="true">
+          Préparation du fichier…
+        </div>
+      ) : value ? (
         <div className="rounded-xl bg-white p-3 shadow-sm">
           {preview ? (
             <img

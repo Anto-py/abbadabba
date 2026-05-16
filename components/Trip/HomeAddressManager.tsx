@@ -48,7 +48,10 @@ export function HomeAddressManager() {
     }
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Chargement…</p>;
+  if (loading)
+    return (
+      <div className="h-28 animate-pulse rounded-2xl bg-white shadow-sm" aria-busy="true" />
+    );
 
   return (
     <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">

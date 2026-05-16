@@ -85,7 +85,14 @@ export function CategoryManager() {
     }
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Chargement…</p>;
+  if (loading)
+    return (
+      <ul className="space-y-2" aria-busy="true">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <li key={i} className="h-14 animate-pulse rounded-xl bg-white shadow-sm" />
+        ))}
+      </ul>
+    );
 
   return (
     <div className="space-y-4">

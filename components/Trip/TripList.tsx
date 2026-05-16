@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "@/components/Toast/ToastProvider";
 
 type Trip = {
   id: string;
@@ -29,6 +30,7 @@ function fmtMoney(n: number) {
 }
 
 export function TripList() {
+  const toast = useToast();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [years, setYears] = useState<number[]>([currentYear]);
@@ -74,8 +76,9 @@ export function TripList() {
       const r = await fetch(`/api/trips/${id}`, { method: "DELETE" });
       if (!r.ok) throw new Error();
       setTrips((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Trajet supprimé");
     } catch {
-      alert("Suppression échouée");
+      toast.error("Suppression échouée");
     } finally {
       setDeletingId(null);
     }
@@ -121,7 +124,11 @@ export function TripList() {
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Chargement…</p>
+        <ul className="space-y-2" aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <li key={i} className="h-20 animate-pulse rounded-2xl bg-white shadow-sm" />
+          ))}
+        </ul>
       ) : error ? (
         <p className="text-sm text-red-600">{error}</p>
       ) : trips.length === 0 ? (
