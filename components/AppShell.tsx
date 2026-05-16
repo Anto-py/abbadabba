@@ -105,7 +105,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
       <main
         ref={mainRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+          hideNav ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"
+        }`}
         onTouchStart={hideNav ? undefined : onTouchStart}
         onTouchMove={hideNav ? undefined : onTouchMove}
         onTouchEnd={hideNav ? undefined : onTouchEnd}

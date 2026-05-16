@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const items = [
   {
@@ -45,23 +46,43 @@ const items = [
 ];
 
 export function BottomNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const diff = window.innerHeight - vv.height;
+      setKeyboardOpen(diff > 150);
+    };
+    update();
+    vv.addEventListener("resize", update);
+    return () => vv.removeEventListener("resize", update);
+  }, []);
 
   return (
-    <nav className="shrink-0 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
+    <nav
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] transition-transform duration-200 ease-out ${
+        keyboardOpen ? "translate-y-full" : "translate-y-0"
+      }`}
+      aria-hidden={keyboardOpen}
+    >
       <ul className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
         {items.map((item) => {
           const active =
             pathname === item.href ||
-            (item.href !== "/transactions/new" &&
-              pathname.startsWith(item.href));
+            (pathname.startsWith(item.href + "/") &&
+              pathname !== "/transactions/new");
+          const primaryActive = item.primary && active;
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
+                style={{ touchAction: "manipulation" }}
                 className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-xs ${
                   item.primary
-                    ? "bg-[#1a1a2e] text-white"
+                    ? `bg-[#1a1a2e] text-white${primaryActive ? " ring-2 ring-[#1a1a2e]/25 ring-offset-2 ring-offset-white" : ""}`
                     : active
                       ? "text-[#1a1a2e]"
                       : "text-zinc-500"
