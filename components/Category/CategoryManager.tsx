@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { notifyCategoriesChanged } from "@/lib/categories-bus";
+import { onRefresh } from "@/lib/refresh-bus";
 
 type Category = {
   id: string;
@@ -33,6 +34,8 @@ export function CategoryManager() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => onRefresh(load), []);
 
   async function patchItem(id: string, patch: Partial<Category>) {
     const prev = items;

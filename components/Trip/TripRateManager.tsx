@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { onRefresh } from "@/lib/refresh-bus";
 
 type TripRate = {
   id: string;
@@ -57,6 +58,8 @@ export function TripRateManager() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => onRefresh(load), []);
 
   const now = new Date();
   const active = rates.find((r) => new Date(r.validFrom) <= now);

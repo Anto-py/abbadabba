@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { onRefresh } from "@/lib/refresh-bus";
+import { onCategoriesChanged } from "@/lib/categories-bus";
 
 type TxType = "EXPENSE" | "INCOME";
 
@@ -54,12 +56,17 @@ export function TransactionList() {
   const [categories, setCategories] = useState<CategoryOpt[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/categories")
+  const loadCategories = useCallback(() => {
+    fetch("/api/categories", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
       .then((cats: CategoryOpt[]) => setCategories(cats))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadCategories();
+    return onCategoriesChanged(loadCategories);
+  }, [loadCategories]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +92,15 @@ export function TransactionList() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(
+    () =>
+      onRefresh(() => {
+        load();
+        loadCategories();
+      }),
+    [load, loadCategories],
+  );
 
   useEffect(() => {
     setPage(1);

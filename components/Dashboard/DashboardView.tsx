@@ -7,6 +7,7 @@ import { SummaryCards } from "./SummaryCards";
 import { CategoryChart } from "./CategoryChart";
 import { MonthlyChart } from "./MonthlyChart";
 import { MarginalRateEditor } from "./MarginalRateEditor";
+import { onRefresh } from "@/lib/refresh-bus";
 
 type Props = { initialYear: number };
 
@@ -33,6 +34,8 @@ export function DashboardView({ initialYear }: Props) {
   useEffect(() => {
     load(year);
   }, [year, load]);
+
+  useEffect(() => onRefresh(() => load(year)), [year, load]);
 
   return (
     <div className="space-y-4">

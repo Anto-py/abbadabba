@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/Toast/ToastProvider";
+import { onRefresh } from "@/lib/refresh-bus";
 
 type Trip = {
   id: string;
@@ -62,6 +63,8 @@ export function TripList() {
   useEffect(() => {
     load(year);
   }, [year]);
+
+  useEffect(() => onRefresh(() => load(year)), [year]);
 
   const totals = useMemo(() => {
     const km = trips.reduce((s, t) => s + t.km, 0);
