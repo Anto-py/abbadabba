@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onCategoriesChanged } from "@/lib/categories-bus";
 
 type Category = {
   id: string;
@@ -43,7 +44,7 @@ export function TransactionEditForm({ id }: { id: string }) {
       try {
         const [txRes, catRes] = await Promise.all([
           fetch(`/api/transactions/${id}`),
-          fetch("/api/categories"),
+          fetch("/api/categories", { cache: "no-store" }),
         ]);
         if (!txRes.ok) throw new Error("Transaction introuvable");
         const txJson = (await txRes.json()) as Transaction;
@@ -63,8 +64,20 @@ export function TransactionEditForm({ id }: { id: string }) {
       }
     }
     load();
+    const off = onCategoriesChanged(() => {
+      fetch("/api/categories", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((cats: Category[]) => {
+          if (cancelled) return;
+          setCategories(cats);
+          setCategoryId((current) =>
+            current && cats.some((c) => c.id === current) ? current : "",
+          );
+        });
+    });
     return () => {
       cancelled = true;
+      off();
     };
   }, [id]);
 

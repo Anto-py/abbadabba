@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProofCapture } from "./ProofCapture";
+import { onCategoriesChanged } from "@/lib/categories-bus";
 
 type Category = {
   id: string;
@@ -33,11 +34,21 @@ export function TransactionForm({ initialType = "EXPENSE" }: { initialType?: TxT
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/categories")
+  const loadCategories = useCallback(() => {
+    fetch("/api/categories", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
-      .then(setCategories);
+      .then((cats: Category[]) => {
+        setCategories(cats);
+        setCategoryId((current) =>
+          current && cats.some((c) => c.id === current) ? current : "",
+        );
+      });
   }, []);
+
+  useEffect(() => {
+    loadCategories();
+    return onCategoriesChanged(loadCategories);
+  }, [loadCategories]);
 
   const category = useMemo(
     () => categories.find((c) => c.id === categoryId),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { notifyCategoriesChanged } from "@/lib/categories-bus";
 
 type Category = {
   id: string;
@@ -45,14 +46,18 @@ export function CategoryManager() {
       setItems(prev);
       const j = await r.json().catch(() => ({}));
       setError(j.error ?? "Erreur mise à jour");
+      return;
     }
+    notifyCategoriesChanged();
   }
 
   async function removeItem(id: string) {
     if (!confirm("Supprimer cette catégorie ?")) return;
     const r = await fetch(`/api/categories/${id}`, { method: "DELETE" });
-    if (r.ok) setItems((arr) => arr.filter((c) => c.id !== id));
-    else {
+    if (r.ok) {
+      setItems((arr) => arr.filter((c) => c.id !== id));
+      notifyCategoriesChanged();
+    } else {
       const j = await r.json().catch(() => ({}));
       setError(j.error ?? "Suppression impossible");
     }
@@ -79,6 +84,7 @@ export function CategoryManager() {
       setDraftRate(100);
       setDraftProof(true);
       setShowForm(false);
+      notifyCategoriesChanged();
     } else {
       const j = await r.json().catch(() => ({}));
       setError(j.error ?? "Création impossible");
