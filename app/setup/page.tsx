@@ -12,11 +12,9 @@ type Form = {
   nextauthUrl: string;
   allowedEmails: string;
   nextauthSecret: string;
-  n8nUrl: string;
-  n8nApiKey: string;
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 const HOST_LABELS: Record<Host, string> = {
   railway: "Railway",
@@ -58,8 +56,6 @@ export default function SetupPage() {
     nextauthUrl: "",
     allowedEmails: "",
     nextauthSecret: "",
-    n8nUrl: "",
-    n8nApiKey: "",
   });
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
@@ -75,8 +71,6 @@ export default function SetupPage() {
       `NEXTAUTH_SECRET="${form.nextauthSecret}"`,
       `ALLOWED_EMAILS="${form.allowedEmails}"`,
     ];
-    if (form.n8nUrl) lines.push(`N8N_WEBHOOK_URL="${form.n8nUrl}"`);
-    if (form.n8nApiKey) lines.push(`N8N_INTERNAL_API_KEY="${form.n8nApiKey}"`);
     return lines.join("\n");
   }, [form]);
 
@@ -104,8 +98,6 @@ export default function SetupPage() {
           form.allowedEmails.trim().length > 0 &&
           form.nextauthSecret.trim().length > 0
         );
-      case 5:
-        return true;
       default:
         return true;
     }
@@ -272,35 +264,6 @@ export default function SetupPage() {
           )}
 
           {step === 5 && (
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#1a1a2e]">N8n (optionnel)</h2>
-              <p className="text-sm text-zinc-700">
-                Laisse vide si tu n'utilises pas N8n. La sauvegarde Google Sheets fonctionne déjà sans N8n.
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-zinc-800">N8N_WEBHOOK_URL</label>
-                <input
-                  type="text"
-                  value={form.n8nUrl}
-                  onChange={(e) => update("n8nUrl", e.target.value)}
-                  placeholder="https://n8n.mondomaine.com/webhook/abbadaba"
-                  className="mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-800">N8N_INTERNAL_API_KEY</label>
-                <input
-                  type="text"
-                  value={form.n8nApiKey}
-                  onChange={(e) => update("n8nApiKey", e.target.value)}
-                  placeholder="clé partagée app ↔ N8n"
-                  className="mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-xs"
-                />
-              </div>
-            </section>
-          )}
-
-          {step === 6 && (
             <section className="space-y-4">
               <h2 className="text-lg font-semibold text-[#1a1a2e]">Récapitulatif</h2>
               <p className="text-sm text-zinc-700">

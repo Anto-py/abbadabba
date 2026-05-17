@@ -169,14 +169,13 @@ Retourne sur [Google Cloud Console → Credentials](https://console.cloud.google
 ### Étape 6 — Configurer les variables via le wizard `/setup`
 
 1. Ouvre `https://abbadabba-xxx.vercel.app/setup` dans ton navigateur. Comme aucune variable n'est définie, l'app te bascule automatiquement sur le wizard.
-2. Suis les 6 étapes :
+2. Suis les 5 étapes :
    - **Hébergeur** : sélectionne `Vercel + Neon`.
    - **DATABASE_URL** : colle la connection string Neon.
    - **GOOGLE_CLIENT_ID** et **GOOGLE_CLIENT_SECRET** : tu les as copiés à l'étape 3.
    - **NEXTAUTH_URL** : `https://abbadabba-xxx.vercel.app` (sans `/` à la fin).
-   - **ALLOWED_EMAILS** : ton email Google (celui qui aura le droit de se connecter ; en mettre plusieurs séparés par virgule si besoin).
+   - **ALLOWED_EMAILS** : **obligatoire** — ton email Google (celui qui aura le droit de se connecter ; en mettre plusieurs séparés par virgule si besoin). Si cette variable est vide, **aucune connexion n'est possible** (sécurité fail-closed).
    - **NEXTAUTH_SECRET** : clique **Générer** → c'est rempli automatiquement.
-   - **N8n** : laisse vide, tu n'en as pas besoin.
 3. À la dernière étape, clique **Copier dans le presse-papier**. Tu obtiens un bloc `.env` complet.
 
 ### Étape 7 — Coller les variables dans Vercel
@@ -229,6 +228,8 @@ Page **Réglages → Indemnité km** : ajouter un nouveau taux quand la circulai
 ### Whitelist d'emails
 
 Modifier la variable d'environnement `ALLOWED_EMAILS` dans Vercel (séparée par des virgules). Redéployer pour appliquer.
+
+⚠️ **`ALLOWED_EMAILS` est obligatoire.** Si la variable est absente ou vide, la connexion est bloquée pour tout le monde (sécurité fail-closed : aucun risque d'oubli qui ouvrirait l'app au monde entier).
 
 ---
 

@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         .split(",")
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
-      if (allowed.length > 0 && !allowed.includes(user.email.toLowerCase())) {
+      if (allowed.length === 0 || !allowed.includes(user.email.toLowerCase())) {
         return false;
       }
       const dbUser = await prisma.user.upsert({
@@ -71,10 +71,16 @@ export const authOptions: NextAuthOptions = {
         if (refreshed.refresh_token) token.refreshToken = refreshed.refresh_token;
       } catch (e) {
         console.error("Token refresh failed", e);
+        token.error = "RefreshAccessTokenError";
+        delete token.accessToken;
+        delete token.expiresAt;
       }
       return token;
     },
-    async session({ session }) {
+    async session({ session, token }) {
+      if ((token as { error?: string }).error === "RefreshAccessTokenError") {
+        (session as { error?: string }).error = "RefreshAccessTokenError";
+      }
       if (session.user?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: session.user.email },
